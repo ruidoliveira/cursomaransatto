@@ -44,6 +44,7 @@ mysql.getConnection((error, conn) =>{
                         id_produtos: prod.id_produtos,
                         nome: prod.nome,
                         preco: prod.preco,
+                        imagem_produto: prod.imagem_produto,
                         request:{
                             tipo: 'GET',
                             descricao: 'Retorna todos os produtos!',
@@ -113,6 +114,7 @@ router.get('/:id_produto', (req, res, next) =>{
                         id_produtos: resultado[0].id_produtos,
                         nome: resultado[0].nome,
                         preco: resultado[0].preco,
+                        imagem_produto: resultado[0].imagem_produto,
                         request:{
                             tipo: 'GET',
                             descricao: 'Retorna um produto!',

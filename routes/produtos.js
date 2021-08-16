@@ -105,7 +105,6 @@ router.patch('/', (req,res,next) => {
             (error, resultado, field) => {
                 conn.release();
                 if(error) {return res.status(500).send({error: error})}
-                console.log('antes')
                 const response = {
                     mensagem: 'Produto Atualizado com sucesso! ✅',
                     produtoAtualizado:{

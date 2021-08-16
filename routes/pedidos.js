@@ -4,32 +4,43 @@ const mysql = require('../mysql');
 
 // RETORNA TODOS pedidos
 router.get('/', (req,res,next) =>{
-mysql.getConnection((error, conn) =>{
-    if(error) {return res.status(500).send({error: error})}
-    conn.query(
-        'SELECT * FROM pedidos;',
-        (error, resultado, fields) =>{
-            if(error) {return res.status(500).send({error: error})}
-            const response = {
-                quantidade: resultado.length,
-                pedidos: resultado.map(pedido => {
-                    return{
-                        id_pedidos: pedido.id_pedidos,
-                        id_produtos: pedido.id_produtos,
-                        quantidade: pedido.quantidade,
-                        request:{
-                            tipo: 'GET',
-                            descricao: 'Retorna todos os produtos!',
-                            url: 'http://localhost:3000/pedidos/' + pedido.id_pedidos
+    mysql.getConnection((error, conn) =>{
+        if(error) {return res.status(500).send({error: error})}
+        conn.query(
+           `SELECT pedidos.id_pedidos,
+            pedidos.quantidade,
+            produtos.id_produtos,
+            produtos.nome,
+            produtos.preco
+            FROM pedidos 
+            INNER JOIN produtos 
+            ON produtos.id_produtos = pedidos.id_produtos;`,
+            (error, resultado, fields) =>{
+                if(error) {return res.status(500).send({error: error})}
+                const response = {
+                    quantidade: resultado.length,
+                    pedidos: resultado.map(pedido => {
+                        return{
+                            id_pedidos: pedido.id_pedidos,
+                            quantidade: pedido.quantidade,
+                            produto:{
+                                id_produtos: pedido.id_produtos,
+                                nome: pedido.nome,
+                                preco: pedido.preco,
+                                
+                            },
+                            request:{
+                                tipo: 'GET',
+                                descricao: 'Retorna todos os produtos!',
+                                url: 'http://localhost:3000/pedidos/' + pedido.id_pedidos
+                            }
                         }
-                    }
-                })
+                    })
+                }
+                return res.status(200).send(response);
             }
-            return res.status(200).send(response)
-        }
-    )
-});
-
+        )
+    });
 });
 
 
@@ -38,27 +49,39 @@ router.post('/', (req,res,next) =>{
     mysql.getConnection((error, conn) =>{
         if(error) {return res.status(500).send({error: error})}
         conn.query(
-            `INSERT INTO pedidos (id_produtos, quantidade) 
-             VALUES (?,?)`,
-            [req.body.id_produtos,req.body.quantidade],
+            'SELECT * FROM produtos WHERE id_produtos = ?',
+            [req.body.id_produtos],
             (error, resultado, field) => {
-                conn.release();
                 if(error) {return res.status(500).send({error: error})}
-                const response = {
-                    mensagem: 'Produto inserido com sucesso! ✅',
-                    pedidoCriado:{
-                        id_pedidos: resultado.id_pedidos,
-                        id_produtos: req.body.id_produtos,
-                        Quantidade: req.body.quantidade,
-                        request:{
-                            tipo: 'GET',
-                            descricao: 'Retorna um pedido!',
-                            url: 'http://localhost:3000/pedidos'
-                         }
-                    }
+                if(resultado.length == 0){
+                    return res.status(404).send({
+                        mensagem: 'Não foi encontrado o produto com este ID',
+                    })
                 }
-                console.log(response);
-                res.status(201).send(response);
+                conn.query(
+                    `INSERT INTO pedidos (id_produtos, quantidade) 
+                     VALUES (?,?)`,
+                    [req.body.id_produtos,req.body.quantidade],
+                    (error, resultado, field) => {
+                        conn.release();
+                        if(error) {return res.status(500).send({error: error})}
+                        const response = {
+                            mensagem: 'Produto inserido com sucesso! ✅',
+                            pedidoCriado:{
+                                id_pedidos: resultado.id_pedidos,
+                                id_produtos: req.body.id_produtos,
+                                Quantidade: req.body.quantidade,
+                                request:{
+                                    tipo: 'GET',
+                                    descricao: 'Retorna um pedido!',
+                                    url: 'http://localhost:3000/pedidos'
+                                 }
+                            }
+                        }
+                        console.log(response);
+                        res.status(201).send(response);
+                    }
+                )
             }
         )
     });
